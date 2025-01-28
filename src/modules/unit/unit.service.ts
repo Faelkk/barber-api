@@ -78,7 +78,7 @@ export class UnitService {
       .populate({
         path: 'auth',
         model: 'Auth',
-        select: 'name description role thumbnail',
+        select: 'name description role thumbnail email avatar',
         match: { role: 'Barber' },
       })
       .populate({
@@ -101,7 +101,7 @@ export class UnitService {
       .populate({
         path: 'auth',
         model: 'Auth',
-        select: 'id name email role description thumbnail',
+        select: 'id name email role description thumbnail email avatar',
         match: { role: 'Barber' },
       })
       .populate({

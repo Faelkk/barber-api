@@ -25,6 +25,7 @@ import { AppointmentValidationService } from './services/validation-appointment.
     MongooseModule.forFeature([
       { name: 'LocalService', schema: localServiceSchema },
     ]),
+    MongooseModule.forFeature([{ name: 'AuthModel', schema: AuthSchema }]),
     AuthModule,
     RolesGuardModule,
   ],

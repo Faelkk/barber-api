@@ -22,6 +22,14 @@ class Env {
   @IsNotEmpty()
   supabaseUrl: string;
 
+  @IsString()
+  @IsNotEmpty()
+  MailerUser: string;
+
+  @IsString()
+  @IsNotEmpty()
+  MailerPassword: string;
+
   PORT: string;
 }
 
@@ -31,6 +39,8 @@ export const env: Env = plainToInstance(Env, {
   dbURL: process.env.DATABASE_URL,
   jwtSecret: process.env.JWT_SECRET,
   PORT: process.env.PORT,
+  MailerUser: process.env.MAILER_USER,
+  MailerPassword: process.env.MAILER_PASS,
 });
 
 const errors = validateSync(env);

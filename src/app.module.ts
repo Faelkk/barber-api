@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { ConfigModule } from '@nestjs/config';
 import { AppService } from './app.service';
-import { JwtModule } from '@nestjs/jwt';
+
 import { env } from 'src/shared/config/env';
 import { AppointmentModule } from './modules/appointment/appointment.module';
 import { APP_GUARD } from '@nestjs/core';
@@ -13,6 +13,7 @@ import { GlobalServiceModule } from './modules/global-service/global-service.mod
 import { BarberShopModule } from './modules/barber-shop/barber-shop.module';
 import { UnitModule } from './modules/unit/unit.module';
 import { LocalServiceModule } from './modules/local-service/local-service.module';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [

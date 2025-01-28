@@ -11,4 +11,6 @@ export interface Auth extends Document {
   thumbnail?: string;
   services: string[];
   unit: string[];
+  recoveryToken: string;
+  recoveryTokenExpiration: Date;
 }

@@ -20,6 +20,8 @@ export const AuthSchema = new Schema({
   avatar: { type: String },
   description: { type: String },
   thumbnail: { type: String },
+  recoveryToken: { type: String },
+  recoveryTokenExpiration: { type: Date },
   services: [{ type: Schema.Types.ObjectId, ref: 'LocalService' }],
   unit: [{ type: Schema.Types.ObjectId, ref: 'Unit' }],
 });

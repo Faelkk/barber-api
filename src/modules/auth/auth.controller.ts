@@ -31,6 +31,12 @@ export class AuthController {
     private readonly supabaseService: SupabaseService,
   ) {}
 
+  @Get('check-token')
+  @IsPublic()
+  async checkToken(@Query('token') token: string) {
+    return this.authService.checkToken(token);
+  }
+
   @IsPublic()
   @Post()
   create(@Body() createAuthDto: CreateAuthDto) {
@@ -41,6 +47,21 @@ export class AuthController {
   @Post('login')
   login(@Body() signinDto: LoginUserDto) {
     return this.authService.login(signinDto);
+  }
+
+  @Post('recovery-password')
+  @IsPublic()
+  async recoveryPassword(@Body('email') email: string) {
+    return this.authService.sendRecoveryEmail(email);
+  }
+
+  @Patch('reset-password')
+  @IsPublic()
+  async resetPassword(
+    @Query('token') token: string,
+    @Body('newPassword') newPassword: string,
+  ) {
+    return this.authService.resetPassword(token, newPassword);
   }
 
   @Post('create-barber')
@@ -60,6 +81,7 @@ export class AuthController {
     },
   ) {
     const { avatarUrl, thumbnailUrl } = await this.uploadFiles(files);
+
     return this.authService.createUserWithRole(
       createAuthDto,
       'Barber',

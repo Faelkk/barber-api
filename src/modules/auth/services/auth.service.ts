@@ -15,6 +15,8 @@ import { LoginUserDto } from '../dto/login-auth-dto';
 import { hash, compare } from 'bcryptjs';
 import { BarberShop } from 'src/shared/interfaces/barber-shop.interface';
 import { Unit } from 'src/shared/interfaces/unit.interface';
+import { randomBytes } from 'crypto';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class AuthService {
@@ -23,6 +25,7 @@ export class AuthService {
     @InjectModel('BarberShop') private readonly barberModel: Model<BarberShop>,
     @InjectModel('Unit') private readonly unitModel: Model<Unit>,
     private readonly jwtService: JwtService,
+    private readonly mailerService: MailerService,
   ) {}
 
   async createUser(createAuthDto: CreateAuthDto) {
@@ -81,12 +84,19 @@ export class AuthService {
 
     const hashedPassword = await hash(password, 12);
 
-    let relatedUnits;
+    let relatedUnits = [];
 
     if (role === 'Barber') {
-      relatedUnits = units?.length
-        ? units
-        : await this.getAllUnitsFromBarbershop(barbershop);
+      if (units?.length > 0) {
+        const foundUnitsFromBarberShop =
+          await this.getAllUnitsFromBarbershop(barbershop);
+
+        relatedUnits = foundUnitsFromBarberShop.filter((unit) =>
+          units.includes(unit),
+        );
+      } else {
+        relatedUnits = await this.getAllUnitsFromBarbershop(barbershop);
+      }
     }
 
     const user = await this.authModel.create({
@@ -103,17 +113,18 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new InternalServerErrorException();
+      throw new InternalServerErrorException('Failed to create user');
     }
 
     await this.barberModel.findByIdAndUpdate(barbershop, {
       $push: { auth: user.id },
     });
 
-    if (user.role === 'Barber') {
-      await this.unitModel.findByIdAndUpdate(units, {
-        $push: { auth: user.id },
-      });
+    if (relatedUnits.length > 0) {
+      await this.unitModel.updateMany(
+        { _id: { $in: relatedUnits } },
+        { $push: { auth: user.id } },
+      );
     }
 
     const accessToken = await this.generateAccessToken(
@@ -161,7 +172,103 @@ export class AuthService {
     role: string,
     barbershop: string,
   ) {
-    return this.jwtService.signAsync({ sub: userId, role, barbershop });
+    return this.jwtService.signAsync(
+      { sub: userId, role, barbershop },
+      {
+        expiresIn: '7d',
+      },
+    );
+  }
+
+  async checkToken(
+    token: string,
+  ): Promise<{ isValid: boolean; payload?: any }> {
+    try {
+      const payload = await this.jwtService.verifyAsync(token);
+
+      return { isValid: true, payload };
+    } catch {
+      return { isValid: false };
+    }
+  }
+
+  async sendRecoveryEmail(email: string) {
+    const user = await this.authModel.findOne({ email });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const token = randomBytes(32).toString('hex');
+    const expiration = new Date(Date.now() + 3600 * 1000);
+
+    await this.authModel.findOneAndUpdate(
+      { email },
+      {
+        recoveryToken: token,
+        recoveryTokenExpiration: expiration,
+      },
+      { new: true },
+    );
+
+    const recoveryLink = `https://your-frontend.com/reset-password?token=${token}`;
+
+    await this.mailerService.sendMail({
+      to: email,
+      from: 'premierbarberbr@gmail.com',
+      subject: 'Password Recovery',
+      html: `
+      <p>Hello,</p>
+      
+      <p>You have requested to reset your password. If you did not make this request, please ignore this message.</p>
+      
+      <p>To reset your password, please click the link below:</p>
+      
+      <p>
+        <a href="${recoveryLink}" style="color: #3498db; text-decoration: none;">Reset Password</a>
+      </p>
+      
+      <p>If the link above does not work, copy and paste the following URL into your browser:</p>
+      
+      <p style="word-break: break-word;">${recoveryLink}</p>
+      
+      <p>Alternatively, you can use the following token to reset your password:</p>
+      
+      <p><strong>${token}</strong></p>
+      
+      <p><em>Note: This link and token will expire on ${expiration.toUTCString()}.</em></p>
+
+      <p>Thank you!</p>
+      
+      <p>Premier Barber Team</p>
+    `,
+    });
+
+    return { message: 'Recovery email sent' };
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    const user = await this.authModel.findOne({
+      recoveryToken: token,
+      recoveryTokenExpiration: { $gt: new Date() },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+
+    const hashedPassword = await hash(newPassword, 12);
+
+    await this.authModel.findOneAndUpdate(
+      { recoveryToken: token },
+      {
+        password: hashedPassword,
+        recoveryToken: null,
+        recoveryTokenExpiration: null,
+      },
+      { new: true },
+    );
+
+    return { message: 'Password reset successful' };
   }
 
   async findAll(barberShopId: string) {
@@ -240,7 +347,8 @@ export class AuthService {
     avatarUrl?: string,
     thumbnailUrl?: string,
   ) {
-    const { name, email, password, phoneNumber, description } = updateAuthDto;
+    const { name, email, password, phoneNumber, description, units } =
+      updateAuthDto;
     const user = await this.authModel.findById(id).exec();
 
     if (!user || user.role !== 'Barber') {
@@ -248,6 +356,19 @@ export class AuthService {
     }
 
     const oldBarbershop = user.barbershop;
+
+    let relatedUnits = [];
+
+    if (units?.length > 0) {
+      const foundUnitsFromBarberShop =
+        await this.getAllUnitsFromBarbershop(oldBarbershop);
+
+      relatedUnits = foundUnitsFromBarberShop.filter((unit) =>
+        units.includes(unit),
+      );
+    } else {
+      relatedUnits = await this.getAllUnitsFromBarbershop(oldBarbershop);
+    }
 
     const hashedPassword = await hash(password, 12);
 
@@ -262,6 +383,7 @@ export class AuthService {
         barbershop: user.barbershop,
         avatar: avatarUrl,
         thumbnail: thumbnailUrl,
+        unit: relatedUnits,
       },
       { new: true },
     );
@@ -274,6 +396,13 @@ export class AuthService {
       await this.barberModel.findByIdAndUpdate(barberEdited.barbershop, {
         $push: { auth: barberEdited.id },
       });
+    }
+
+    if (relatedUnits.length > 0) {
+      await this.unitModel.updateMany(
+        { _id: { $in: relatedUnits } },
+        { $push: { auth: user.id } },
+      );
     }
 
     return { barberEdited };
@@ -340,21 +469,25 @@ export class AuthService {
     await this.barberModel.findByIdAndUpdate(barberShopId, {
       $pull: { auth: user.id },
     });
+
+    await this.unitModel.findByIdAndUpdate(barberShopId, {
+      $pull: { auth: user.id },
+    });
+
     return { message: 'User removed successfully' };
   }
 
   private async getAllUnitsFromBarbershop(
     barbershopId: string,
   ): Promise<string[]> {
-    const barbershop = await this.barberModel
-      .findById(barbershopId)
-      .select('units')
+    const units = await this.unitModel
+      .find({ barbershop: barbershopId })
       .exec();
 
-    if (!barbershop || !barbershop.unit?.length) {
+    if (!units) {
       throw new NotFoundException('No units found for the barbershop');
     }
 
-    return barbershop.unit;
+    return units.map((unit) => unit.id);
   }
 }

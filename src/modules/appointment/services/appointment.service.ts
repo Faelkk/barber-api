@@ -13,6 +13,7 @@ import { Unit } from 'src/shared/interfaces/unit.interface';
 import { format, parseISO, startOfDay, endOfDay } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import { AppointmentValidationService } from './validation-appointment.service';
+import { Auth } from 'src/shared/interfaces/auth.interface';
 
 @Injectable()
 export class AppointmentService {
@@ -21,6 +22,8 @@ export class AppointmentService {
     private readonly appointmentModel: Model<Appointment>,
     @InjectModel('Unit')
     private readonly unitModel: Model<Unit>,
+    @InjectModel('Auth')
+    private readonly authModel: Model<Auth>,
     private readonly appointmentValidationService: AppointmentValidationService,
   ) {}
 
@@ -31,7 +34,8 @@ export class AppointmentService {
     }
 
     const operatingHours = unitExists.operatingHours;
-    const appointmentDate = parseISO(date);
+
+    const appointmentDate = date;
 
     const dayOfWeek = format(appointmentDate, 'eeee', {
       locale: enUS,
@@ -99,7 +103,10 @@ export class AppointmentService {
       date,
     );
     const availableSlots = await this.getAvailableTimeslots(unit, date);
-    const appointmentTime = format(parseISO(date), 'HH:mm');
+
+    const appointmentDate = date;
+
+    const appointmentTime = format(appointmentDate, 'HH:mm');
 
     if (!availableSlots.includes(appointmentTime)) {
       throw new BadRequestException(
@@ -125,6 +132,14 @@ export class AppointmentService {
       serviceType,
     });
 
+    const users = await this.authModel.find({ barbershop }).exec();
+
+    await this.unitModel.findByIdAndUpdate(
+      appointment._id,
+      { $push: { auth: { $each: users.map((user) => user._id) } } },
+      { new: true },
+    );
+
     return { appointment };
   }
 
@@ -133,6 +148,7 @@ export class AppointmentService {
     updateAppointmentDto: UpdateAppointmentDto,
     userId: string,
     userRole: string,
+    barberShop: string,
   ) {
     const { barber, client, date, service, status, unit, serviceType } =
       updateAppointmentDto;
@@ -186,6 +202,14 @@ export class AppointmentService {
       { new: true },
     );
 
+    const users = await this.authModel.find({ barberShop }).exec();
+
+    await this.unitModel.findByIdAndUpdate(
+      updatedAppointment._id,
+      { $push: { auth: { $each: users.map((user) => user._id) } } },
+      { new: true },
+    );
+
     return { updatedAppointment };
   }
 
@@ -221,21 +245,20 @@ export class AppointmentService {
     return { appointments };
   }
 
-  async findAllByClientId(userId: string, userRole: string, clientId: string) {
-    await this.appointmentValidationService.validatePermission(
-      userRole,
-      userId,
-      clientId,
-    );
+  async findOne(id: string, userId: string, userRole: string) {
+    const filter =
+      userRole === 'Barber' ? { barber: userId } : { client: userId };
 
     const modelToPopulate =
       await this.appointmentValidationService.getModelToPopulate(
         this.appointmentModel,
-        { client: clientId },
+        filter,
       );
 
     const appointments = await this.appointmentModel
-      .find({ client: clientId })
+      .findOne({
+        _id: id,
+      })
       .populate({
         path: 'service',
         model: modelToPopulate,
@@ -243,91 +266,11 @@ export class AppointmentService {
       .populate(this.appointmentValidationService.getPopulateOptions())
       .exec();
 
-    if (!appointments.length) {
+    if (!appointments) {
       throw new NotFoundException('No appointments found for this client');
     }
 
     return { appointments };
-  }
-
-  async findAllByBarberId(userId: string, userRole: string, barberId: string) {
-    await this.appointmentValidationService.validatePermission(
-      userRole,
-      userId,
-      barberId,
-    );
-
-    const modelToPopulate =
-      await this.appointmentValidationService.getModelToPopulate(
-        this.appointmentModel,
-        { barber: barberId },
-      );
-
-    const appointments = await this.appointmentModel
-      .find({ barber: barberId })
-      .populate({
-        path: 'service',
-        model: modelToPopulate,
-      })
-      .populate(this.appointmentValidationService.getPopulateOptions())
-      .exec();
-
-    if (!appointments.length) {
-      throw new NotFoundException('No appointments found for this barber');
-    }
-
-    return { appointments };
-  }
-
-  async findAllByUnitId(userId: string, userRole: string, unitId: string) {
-    await this.appointmentValidationService.validatePermission(
-      userRole,
-      userId,
-      unitId,
-    );
-
-    const modelToPopulate =
-      await this.appointmentValidationService.getModelToPopulate(
-        this.appointmentModel,
-        { unit: unitId },
-      );
-
-    const appointments = await this.appointmentModel
-      .find({ unit: unitId })
-      .populate({
-        path: 'service',
-        model: modelToPopulate,
-      })
-      .populate(this.appointmentValidationService.getPopulateOptions())
-      .exec();
-
-    if (!appointments.length) {
-      throw new NotFoundException('No appointments found for this unit');
-    }
-
-    return { appointments };
-  }
-
-  async findOne(id: string, barberId: string, clientId: string) {
-    const modelToPopulate =
-      await this.appointmentValidationService.getModelToPopulate(
-        this.appointmentModel,
-        { client: clientId },
-      );
-
-    const appointment = await this.appointmentModel
-      .findOne({ _id: id, barber: barberId, client: clientId })
-      .populate({
-        path: 'service',
-        model: modelToPopulate,
-      })
-      .populate(this.appointmentValidationService.getPopulateOptions())
-      .exec();
-
-    if (!appointment) {
-      throw new NotFoundException('Appointment not found');
-    }
-    return { appointment };
   }
 
   async remove(id: string, userId: string, userRole: string) {

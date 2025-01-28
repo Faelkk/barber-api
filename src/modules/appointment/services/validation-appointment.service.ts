@@ -187,7 +187,13 @@ export class AppointmentValidationService {
       {
         path: 'unit',
         model: 'Unit',
-        select: 'address',
+        select: 'address auth',
+        populate: {
+          path: 'auth',
+          model: 'Auth',
+          select: 'name role thumbnail email avatar',
+          match: { role: 'Barber' },
+        },
       },
     ];
   }

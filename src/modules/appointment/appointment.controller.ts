@@ -15,12 +15,17 @@ import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { ActiveUserId } from 'src/shared/decorators/activeUserId';
 import { ActiveUserRole } from 'src/shared/decorators/activeUserRole';
 import { BarberShopAccessGuard } from 'src/shared/guards/barber-shop/barber-shop-guard';
+import { IsPublic } from 'src/shared/decorators/isPublic';
+import { SkipBarberShopIdCheck } from 'src/shared/decorators/SkipBarberShopId';
+import { activeBarberShop } from 'src/shared/decorators/activeBarberShop';
 
 @Controller('appointment')
 @UseGuards(BarberShopAccessGuard)
 export class AppointmentController {
   constructor(private readonly appointmentService: AppointmentService) {}
 
+  @IsPublic()
+  @SkipBarberShopIdCheck()
   @Get('available-times/:unitId')
   async getAvailableTimes(
     @Param('unitId') unitId: string,
@@ -47,54 +52,19 @@ export class AppointmentController {
   @Get(':id')
   findOne(
     @Param('id') id: string,
-    @Query('barber') barberId?: string,
-    @Query('client') clientId?: string,
+    @ActiveUserId() userId: string,
+    @ActiveUserRole() userRole: string,
   ) {
-    return this.appointmentService.findOne(id, barberId, clientId);
+    return this.appointmentService.findOne(id, userId, userRole);
   }
 
   @Get('/user/:id')
   findAllByUserId(
     @Param('id') id: string,
-    @Query() userRole: string,
+    @ActiveUserRole() userRole: string,
     @ActiveUserId() userId: string,
   ) {
     return this.appointmentService.findAllByUserId(id, userId, userRole);
-  }
-
-  @Get('client/:clientId')
-  findAllByClientId(
-    @Param('clientId') clientId: string,
-    @ActiveUserId() userId: string,
-    @ActiveUserRole() userRole: string,
-  ) {
-    return this.appointmentService.findAllByClientId(
-      userId,
-      userRole,
-      clientId,
-    );
-  }
-
-  @Get('barber/:barberId')
-  findAllByBarberId(
-    @Param('barberId') barberId: string,
-    @ActiveUserId() userId: string,
-    @ActiveUserRole() userRole: string,
-  ) {
-    return this.appointmentService.findAllByBarberId(
-      userId,
-      userRole,
-      barberId,
-    );
-  }
-
-  @Get('unit/:unitId')
-  findAllByUnitId(
-    @Param('unitId') unitId: string,
-    @ActiveUserId() userId: string,
-    @ActiveUserRole() userRole: string,
-  ) {
-    return this.appointmentService.findAllByUnitId(userId, userRole, unitId);
   }
 
   @Patch(':id')
@@ -103,12 +73,14 @@ export class AppointmentController {
     @Body() updateAppointmentDto: UpdateAppointmentDto,
     @ActiveUserId() userId: string,
     @ActiveUserRole() userRole: string,
+    @activeBarberShop() barberShop: string,
   ) {
     return this.appointmentService.update(
       id,
       updateAppointmentDto,
       userId,
       userRole,
+      barberShop,
     );
   }
 
