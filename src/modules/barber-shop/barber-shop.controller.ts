@@ -20,6 +20,7 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { IsPublic } from 'src/shared/decorators/isPublic';
 import { SupabaseService } from 'src/shared/supabase/supabase.service';
 import { RolesGuard } from '../roles/roles.guard';
+import { ApiBody } from '@nestjs/swagger';
 
 @Controller('barber-shop')
 @UseGuards(RolesGuard)
@@ -30,6 +31,7 @@ export class BarberShopController {
   ) {}
 
   @Post('')
+  @ApiBody({ type: CreateBarberShopDto })
   @UseInterceptors(
     FileFieldsInterceptor([
       { name: 'avatar', maxCount: 1 },
@@ -79,6 +81,7 @@ export class BarberShopController {
     ]),
   )
   @Patch(':id')
+  @ApiBody({ type: UpdateBarberShopDto })
   @Roles(Role.Developer)
   async update(
     @Param('id') id: string,

@@ -1,3 +1,4 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsString,
   IsNotEmpty,
@@ -13,6 +14,7 @@ export class CreateAuthDto {
   /**
    * Nome do usuário.
    */
+  @ApiProperty({ description: 'Nome do usuário' })
   @IsString()
   @IsNotEmpty()
   name: string;
@@ -20,6 +22,7 @@ export class CreateAuthDto {
   /**
    * E-mail do usuário.
    */
+  @ApiProperty({ description: 'E-mail do usuário' })
   @IsString()
   @IsNotEmpty()
   @IsEmail()
@@ -28,6 +31,7 @@ export class CreateAuthDto {
   /**
    * Senha do usuário.
    */
+  @ApiProperty({ description: 'Senha do usuário', minLength: 8 })
   @IsString()
   @IsNotEmpty()
   @MinLength(8)
@@ -36,6 +40,7 @@ export class CreateAuthDto {
   /**
    * Número de telefone do usuário.
    */
+  @ApiProperty({ description: 'Número de telefone do usuário' })
   @IsString()
   @IsNotEmpty()
   @IsPhoneNumber('BR')
@@ -44,22 +49,32 @@ export class CreateAuthDto {
   /**
    * Papel do usuário.
    */
+  @ApiProperty({
+    enum: ['Client', 'Barber', 'Admin'],
+    description: 'Papel do usuário',
+  })
   @IsString()
   @IsNotEmpty()
   @IsEnum(['Client', 'Barber', 'Admin'])
   role: 'Client' | 'Barber' | 'Admin';
 
   /**
-   * Descrição do usuário.
+   * Descrição do usuário (opcional).
    */
+  @ApiPropertyOptional({ description: 'Descrição do usuário' })
   @IsOptional()
   @IsString()
   description?: string;
 
+  @ApiProperty({ description: 'ID da barbearia do usuário' })
   @IsString()
   @IsNotEmpty()
   barbershop: string;
 
+  @ApiPropertyOptional({
+    description: 'Unidades da barbearia do usuário',
+    type: [String],
+  })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })

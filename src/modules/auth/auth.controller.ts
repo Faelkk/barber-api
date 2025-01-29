@@ -22,6 +22,7 @@ import { SupabaseService } from 'src/shared/supabase/supabase.service';
 import { RolesGuard } from '../roles/roles.guard';
 import { ActiveUserId } from 'src/shared/decorators/activeUserId';
 import { activeBarberShop } from 'src/shared/decorators/activeBarberShop';
+import { ApiBody } from '@nestjs/swagger';
 
 @Controller('auth')
 @UseGuards(RolesGuard)
@@ -38,12 +39,14 @@ export class AuthController {
   }
 
   @IsPublic()
+  @ApiBody({ type: CreateAuthDto })
   @Post()
   create(@Body() createAuthDto: CreateAuthDto) {
     return this.authService.createUser(createAuthDto);
   }
 
   @IsPublic()
+  @ApiBody({ type: LoginUserDto })
   @Post('login')
   login(@Body() signinDto: LoginUserDto) {
     return this.authService.login(signinDto);
@@ -64,6 +67,7 @@ export class AuthController {
     return this.authService.resetPassword(token, newPassword);
   }
 
+  @ApiBody({ type: CreateAuthDto })
   @Post('create-barber')
   @Roles(Role.Admin)
   @UseInterceptors(
@@ -90,12 +94,14 @@ export class AuthController {
     );
   }
 
+  @ApiBody({ type: CreateAuthDto })
   @Post('create-developer')
   @Roles(Role.Developer)
   createDeveloper(@Body() createAuthDto: CreateAuthDto) {
     return this.authService.createUserWithRole(createAuthDto, 'Developer');
   }
 
+  @ApiBody({ type: CreateAuthDto })
   @Post('create-admin')
   @Roles(Role.Admin, Role.Developer)
   createAdmin(@Body() createAuthDto: CreateAuthDto) {
@@ -125,11 +131,13 @@ export class AuthController {
     return this.authService.findOne(id, barberShopId);
   }
 
+  @ApiBody({ type: UpdateAuthDto })
   @Patch('update-user/:id')
   updateUser(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
     return this.authService.updateUser(id, updateAuthDto);
   }
 
+  @ApiBody({ type: UpdateAuthDto })
   @Patch('update-barber/:id')
   @Roles(Role.Admin, Role.Barber || Role.Developer)
   @UseInterceptors(
@@ -157,6 +165,7 @@ export class AuthController {
     );
   }
 
+  @ApiBody({ type: UpdateAuthDto })
   @Patch('update-admin/:id')
   @Roles(Role.Admin, Role.Developer)
   @UseInterceptors(

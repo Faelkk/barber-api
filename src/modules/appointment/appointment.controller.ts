@@ -18,6 +18,7 @@ import { BarberShopAccessGuard } from 'src/shared/guards/barber-shop/barber-shop
 import { IsPublic } from 'src/shared/decorators/isPublic';
 import { SkipBarberShopIdCheck } from 'src/shared/decorators/SkipBarberShopId';
 import { activeBarberShop } from 'src/shared/decorators/activeBarberShop';
+import { ApiBody } from '@nestjs/swagger';
 
 @Controller('appointment')
 @UseGuards(BarberShopAccessGuard)
@@ -36,6 +37,7 @@ export class AppointmentController {
     return availableTimeslots;
   }
 
+  @ApiBody({ type: CreateAppointmentDto })
   @Post()
   create(
     @Body() createAppointmentDto: CreateAppointmentDto,
@@ -67,6 +69,7 @@ export class AppointmentController {
     return this.appointmentService.findAllByUserId(id, userId, userRole);
   }
 
+  @ApiBody({ type: UpdateAppointmentDto })
   @Patch(':id')
   update(
     @Param('id') id: string,

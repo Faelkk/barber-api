@@ -22,6 +22,7 @@ import { RolesGuard } from '../roles/roles.guard';
 import { BarberShopAccessGuard } from 'src/shared/guards/barber-shop/barber-shop-guard';
 import { IsPublic } from 'src/shared/decorators/isPublic';
 import { SkipBarberShopIdCheck } from 'src/shared/decorators/SkipBarberShopId';
+import { ApiBody } from '@nestjs/swagger';
 
 @Controller('unit')
 @UseGuards(RolesGuard)
@@ -33,6 +34,7 @@ export class UnitController {
   ) {}
 
   @Post()
+  @ApiBody({ type: CreateUnitDto })
   @UseInterceptors(
     FileFieldsInterceptor([
       { name: 'avatar', maxCount: 1 },
@@ -78,6 +80,7 @@ export class UnitController {
   }
 
   @Patch(':id')
+  @ApiBody({ type: UpdateUnitDto })
   @UseInterceptors(
     FileFieldsInterceptor([
       { name: 'avatar', maxCount: 1 },

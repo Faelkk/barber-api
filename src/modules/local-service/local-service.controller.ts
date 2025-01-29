@@ -21,6 +21,7 @@ import { RolesGuard } from '../roles/roles.guard';
 import { BarberShopAccessGuard } from 'src/shared/guards/barber-shop/barber-shop-guard';
 import { ActiveUserId } from 'src/shared/decorators/activeUserId';
 import { ActiveUserRole } from 'src/shared/decorators/activeUserRole';
+import { ApiBody } from '@nestjs/swagger';
 
 @Controller('local-service')
 @UseGuards(RolesGuard)
@@ -32,6 +33,7 @@ export class LocalServiceController {
   ) {}
 
   @Post()
+  @ApiBody({ type: CreateLocalServiceDto })
   @UseInterceptors(
     FileFieldsInterceptor([
       { name: 'avatar', maxCount: 1 },
@@ -87,6 +89,7 @@ export class LocalServiceController {
   }
 
   @Patch(':id')
+  @ApiBody({ type: UpdateLocalServiceDto })
   @Roles(Role.Barber, Role.Admin, Role.Developer)
   @UseInterceptors(
     FileFieldsInterceptor([

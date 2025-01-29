@@ -21,6 +21,7 @@ import { RolesGuard } from '../roles/roles.guard';
 import { BarberShopAccessGuard } from 'src/shared/guards/barber-shop/barber-shop-guard';
 import { SkipBarberShopIdCheck } from 'src/shared/decorators/SkipBarberShopId';
 import { IsPublic } from 'src/shared/decorators/isPublic';
+import { ApiBody } from '@nestjs/swagger';
 
 @Controller('global-service')
 @UseGuards(RolesGuard)
@@ -39,6 +40,7 @@ export class GlobalServiceController {
   }
 
   @Post()
+  @ApiBody({ type: CreateGlobalServiceDto })
   @Roles(Role.Admin, Role.Barber, Role.Developer)
   @UseInterceptors(
     FileFieldsInterceptor([
@@ -81,6 +83,7 @@ export class GlobalServiceController {
   }
 
   @Patch(':id')
+  @ApiBody({ type: UpdateGlobalServiceDto })
   @Roles(Role.Admin, Role.Barber, Role.Developer)
   @UseInterceptors(
     FileFieldsInterceptor([
