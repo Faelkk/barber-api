@@ -1,85 +1,69 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# ✂️ Barber - API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A Barber API é um software para o gerenciamento de barbearias, desenvolvida com NestJS e Mongoose, utilizando MongoDB para armazenamento de dados e Supabase para o storage de imagens.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 🚀 Funcionalidades Principais:
 
-## Description
+- ✅ Autenticação e recuperação de usuários <br>
+- ✅ Gerenciamento de agendamentos para horários de atendimento <br>
+- ✅ Cadastro de serviços globais e locais <br>
+- ✅ Criação e administração de unidades da barbearia <br>
+- ✅ Gestão de barbeiros e funcionários <br>
+- ✅ Configuração de horários de funcionamento <br>
+- ✅ Gerenciamento de contatos e redes sociais <br>
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 🛠️ Tecnologias Utilizadas
 
-## Project setup
+📌 **Back-end**
 
-```bash
-$ npm install
-```
+- [NestJS](https://docs.nestjs.com/) - Framework progressivo para Node.js
+- [Node.js](https://nodejs.org/en) Ambiente de execução JavaScript
+- [Typescript](https://www.typescriptlang.org/) Superconjunto tipado do JavaScript
+- [Express](https://expressjs.com/pt-br/) Framework web minimalista para Node.js
 
-## Compile and run the project
+📚 **Bibliotecas**
 
-```bash
-# development
-$ npm run start
+- [swagger](https://www.npmjs.com/package/swagger) Documentação de API
+- [mongoose](https://www.npmjs.com/package/mongoose) ODM para MongoDB
+- [class-transformer](https://www.npmjs.com/package/class-transformer) Manipulação de objetos em TypeScript
+- [class-validator](https://www.npmjs.com/package/class-validator) Validação de dados
+- [@supabase/supabase-js](https://www.npmjs.com/package/@supabase/supabase-js) Integração com Supabase
+- [bcrypt](https://www.npmjs.com/package/bcrypt) Hash de senhas seguras
+- [date-fns](https://www.npmjs.com/package/date-fns) Manipulação de datas
 
-# watch mode
-$ npm run start:dev
+## 📁 Swagger
 
-# production mode
-$ npm run start:prod
-```
+<img style="width:1920px" src="src/swagger/images/doc-1.png" /> <img style="width:1920px" src="src/swagger/images/doc-2.png"  />
 
-## Run tests
+<img style="width:1920px" src="src/swagger/images/doc-3.png"  /> <img style="width:1920px" src="src/swagger/images/schemas.png"  />
 
-```bash
-# unit tests
-$ npm run test
+🔋 **Controle de versão e deploy**
 
-# e2e tests
-$ npm run test:e2e
+- [Git](https://git-scm.com) - Sistema de controle de versão
 
-# test coverage
-$ npm run test:cov
-```
+⚙️ **Configuranções e Instalações**
 
-## Resources
+Clone do Projeto
 
-Check out a few resources that may come in handy when working with NestJS:
+    $ git clone https://github.com/Faelkk/fincheck-api
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+Instalando as dependências
 
-## Support
+    $ npm install
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Iniciando o projeto
 
-## Stay in touch
+    $ npm run dev
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+<br>
 
-## License
+**Como me ajudar nesse projeto?**
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+- Você ira me ajudar muito me seguindo aqui no GitHub
+- Dando uma estrela no projeto
+- Conectando-se comigo no LinkedIn para fazer parte da minha rede.
+
+<br>
+
+**Feito por**
+[Rafael Achtenberg](linkedin.com/in/rafael-achtenberg-7a4b12284/)

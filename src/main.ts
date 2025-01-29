@@ -6,10 +6,12 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   const config = new DocumentBuilder()
-    .setTitle('Cats example')
-    .setDescription('The cats API description')
+    .setTitle('Barber Api')
+    .setDescription(
+      'A Barber API é um software para o gerenciamento de barbearias, desenvolvida com NestJS e Mongoose, utilizando MongoDB para armazenamento de dados e Supabase para o storage de imagens.',
+    )
     .setVersion('1.0')
-    .addTag('cats')
+    .addTag('Barber')
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory);
