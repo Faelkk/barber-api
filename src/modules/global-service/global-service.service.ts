@@ -135,7 +135,7 @@ export class GlobalServiceService {
     }
 
     return {
-      message: 'Local service updated successfully',
+      message: 'Global service updated successfully',
       globalService: globalServiceEdited,
     };
   }

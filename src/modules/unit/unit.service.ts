@@ -39,7 +39,7 @@ export class UnitService {
 
     if (existingUnit) {
       throw new ConflictException(
-        'A unit with this address (CEP) alreanpm run start:dedy exists.',
+        'A unit with this address (CEP) alreanpm run start: cep already exists.',
       );
     }
 

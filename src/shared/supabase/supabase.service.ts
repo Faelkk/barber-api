@@ -23,11 +23,15 @@ export class SupabaseService {
     bucketName: string,
     file: Express.Multer.File,
   ): Promise<string | null> {
+    console.log(this.supabaseUrl, this.supabaseKey, 'teste');
+
     const { data, error } = await this.supabase.storage
       .from(bucketName)
       .upload(file.originalname, file.buffer, {
         upsert: true,
       });
+
+    console.log(error);
 
     if (error) {
       throw new Error(`Error uploading file: ${error.message}`);
