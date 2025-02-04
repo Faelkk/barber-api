@@ -3,6 +3,7 @@ config();
 
 import { plainToInstance } from 'class-transformer';
 import { IsNotEmpty, IsString, NotEquals, validateSync } from 'class-validator';
+import { InternalServerErrorException } from '@nestjs/common';
 
 class Env {
   @IsString()
@@ -46,5 +47,5 @@ export const env: Env = plainToInstance(Env, {
 const errors = validateSync(env);
 
 if (errors.length > 0) {
-  throw new Error(JSON.stringify(errors, null, 2));
+  throw new InternalServerErrorException(JSON.stringify(errors, null, 2));
 }

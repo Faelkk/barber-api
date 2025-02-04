@@ -1,5 +1,5 @@
 // src/shared/supabase/supabase.service.ts
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { createClient } from '@supabase/supabase-js';
 import { Express } from 'express';
 import { env } from '../config/env';
@@ -34,7 +34,9 @@ export class SupabaseService {
     console.log(error);
 
     if (error) {
-      throw new Error(`Error uploading file: ${error.message}`);
+      throw new InternalServerErrorException(
+        `Error uploading file: ${error.message}`,
+      );
     }
 
     return data?.path

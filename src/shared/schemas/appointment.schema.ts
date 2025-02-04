@@ -1,7 +1,8 @@
 import { Schema } from 'mongoose';
 
 export const AppointmentSchema = new Schema({
-  client: { type: Schema.Types.ObjectId, ref: 'Auth', required: true },
+  client: { type: Schema.Types.ObjectId, ref: 'Auth', default: null },
+  guestName: { type: String, required: false },
   barber: { type: Schema.Types.ObjectId, ref: 'Auth', required: true },
   service: {
     type: Schema.Types.ObjectId,

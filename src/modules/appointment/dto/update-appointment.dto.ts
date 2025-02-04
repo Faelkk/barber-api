@@ -9,6 +9,11 @@ export class UpdateAppointmentDto extends PartialType(CreateAppointmentDto) {
   })
   client?: string;
 
+  @ApiPropertyOptional({
+    description: 'Nome do cliente associado ao agendamento',
+  })
+  guestName?: string;
+
   // * ID do barbeiro associado ao agendamento
   @ApiPropertyOptional({
     description: 'ID do barbeiro associado ao agendamento',

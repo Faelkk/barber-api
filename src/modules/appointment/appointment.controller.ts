@@ -19,6 +19,7 @@ import { IsPublic } from 'src/shared/decorators/isPublic';
 import { SkipBarberShopIdCheck } from 'src/shared/decorators/SkipBarberShopId';
 import { activeBarberShop } from 'src/shared/decorators/activeBarberShop';
 import { ApiBody } from '@nestjs/swagger';
+import { Role, Roles } from 'src/shared/decorators/isRoles';
 
 @Controller('appointment')
 @UseGuards(BarberShopAccessGuard)
@@ -49,6 +50,27 @@ export class AppointmentController {
       userId,
       userRole,
     );
+  }
+
+  @Roles(Role.Barber, Role.Admin, Role.Developer)
+  @Post('/guestName')
+  createForGuest(@Body() createAppointmentDto: CreateAppointmentDto) {
+    return this.appointmentService.createForGuest(createAppointmentDto);
+  }
+
+  @Roles(Role.Barber, Role.Admin, Role.Developer)
+  @Patch('/guestName/:id')
+  updateGuestAppointment(
+    @Param('id') id: string,
+    @Body() updateAppointmentDto: UpdateAppointmentDto,
+  ) {
+    return this.appointmentService.updateForGuest(id, updateAppointmentDto);
+  }
+
+  @Roles(Role.Barber, Role.Admin, Role.Developer)
+  @Patch('change-status/:id')
+  changeStatus(@Param('id') id: string) {
+    return this.appointmentService.changeStatus(id);
   }
 
   @Get(':id')

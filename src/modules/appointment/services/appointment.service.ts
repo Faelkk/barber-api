@@ -74,21 +74,111 @@ export class AppointmentService {
     return availableSlots;
   }
 
+  async createForGuest(createAppointmentDto: CreateAppointmentDto) {
+    const { guestName, date, service, barbershop, unit, serviceType, barber } =
+      createAppointmentDto;
+
+    if (!guestName) {
+      throw new BadRequestException('É necessário fornecer um guestName.');
+    }
+
+    await this.appointmentValidationService.validateServiceExistence(
+      service,
+      serviceType,
+    );
+
+    const availableSlots = await this.getAvailableTimeslots(unit, date);
+    const appointmentTime = format(parseISO(date), 'HH:mm');
+
+    if (!availableSlots.includes(appointmentTime)) {
+      throw new BadRequestException(
+        `O horário selecionado (${appointmentTime}) não está disponível.`,
+      );
+    }
+
+    const appointment = await this.appointmentModel.create({
+      barber,
+      guestName,
+      date,
+      service,
+      barbershop,
+      unit,
+      serviceType,
+      status: 'scheduled',
+    });
+
+    return { appointment };
+  }
+
+  async updateForGuest(id: string, updateAppointmentDto: UpdateAppointmentDto) {
+    const { date, service, status, unit, serviceType, barber, guestName } =
+      updateAppointmentDto;
+
+    const existingAppointment = await this.appointmentModel
+      .findOne({ _id: id, guestName: { $ne: null } })
+      .exec();
+
+    if (!existingAppointment) {
+      throw new NotFoundException('Agendamento para convidado não encontrado.');
+    }
+
+    const availableSlots = await this.getAvailableTimeslots(unit, date);
+    const appointmentTime = format(parseISO(date), 'HH:mm');
+
+    if (!availableSlots.includes(appointmentTime)) {
+      throw new BadRequestException(
+        `O horário selecionado (${appointmentTime}) não está disponível.`,
+      );
+    }
+
+    await this.appointmentValidationService.validateServiceExistence(
+      service,
+      serviceType,
+    );
+
+    const updatedAppointment = await this.appointmentModel.findOneAndUpdate(
+      { _id: id },
+      { date, service, status, unit, serviceType, barber, guestName },
+      { new: true },
+    );
+
+    return { updatedAppointment };
+  }
+
+  async changeStatus(id: string) {
+    const existingAppointment = await this.appointmentModel
+      .findOne({ _id: id })
+      .exec();
+
+    if (!existingAppointment) {
+      throw new NotFoundException('Agendamento para convidado não encontrado.');
+    }
+
+    if (existingAppointment.status !== 'scheduled') {
+      throw new BadRequestException(
+        'O status deste agendamento não pode ser mudado.',
+      );
+    }
+
+    const updatedAppointment = await this.appointmentModel.findOneAndUpdate(
+      { _id: id },
+      { status: 'completed' },
+    );
+
+    return { updatedAppointment };
+  }
+
   async create(
     createAppointmentDto: CreateAppointmentDto,
     userId: string,
     userRole: string,
   ) {
-    const {
-      barber,
-      client,
-      date,
-      service,
-      status,
-      barbershop,
-      unit,
-      serviceType,
-    } = createAppointmentDto;
+    const { barber, client, date, service, barbershop, unit, serviceType } =
+      createAppointmentDto;
+
+    if (!client) {
+      throw new BadRequestException('client é obrigatorio');
+    }
 
     await this.appointmentValidationService.validateUserPermission(
       userRole,
@@ -102,20 +192,17 @@ export class AppointmentService {
       unit,
       date,
     );
+
     const availableSlots = await this.getAvailableTimeslots(unit, date);
-
-    const appointmentDate = date;
-
-    const appointmentTime = format(appointmentDate, 'HH:mm');
+    const appointmentTime = format(parseISO(date), 'HH:mm');
 
     if (!availableSlots.includes(appointmentTime)) {
       throw new BadRequestException(
-        `The selected time (${appointmentTime}) is not available.`,
+        `O horário selecionado (${appointmentTime}) não está disponível.`,
       );
     }
 
     await this.appointmentValidationService.validateAppointmentTime(date, unit);
-
     await this.appointmentValidationService.validateServiceExistence(
       service,
       serviceType,
@@ -123,22 +210,14 @@ export class AppointmentService {
 
     const appointment = await this.appointmentModel.create({
       barber,
-      client,
+      client: client,
       date,
       service,
-      status,
-      unit,
       barbershop,
+      unit,
       serviceType,
+      status: 'scheduled',
     });
-
-    const users = await this.authModel.find({ barbershop }).exec();
-
-    await this.unitModel.findByIdAndUpdate(
-      appointment._id,
-      { $push: { auth: { $each: users.map((user) => user._id) } } },
-      { new: true },
-    );
 
     return { appointment };
   }
@@ -152,6 +231,10 @@ export class AppointmentService {
   ) {
     const { barber, client, date, service, status, unit, serviceType } =
       updateAppointmentDto;
+
+    if (!client) {
+      throw new BadRequestException('client é obrigatorio');
+    }
 
     await this.appointmentValidationService.validateUserPermission(
       userRole,

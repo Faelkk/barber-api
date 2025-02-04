@@ -4,6 +4,7 @@ import {
   NotFoundException,
   UnauthorizedException,
   InternalServerErrorException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -86,18 +87,34 @@ export class AuthService {
 
     let relatedUnits = [];
 
-    if (role === 'Barber') {
-      if (units?.length > 0) {
-        const foundUnitsFromBarberShop =
-          await this.getAllUnitsFromBarbershop(barbershop);
-
-        relatedUnits = foundUnitsFromBarberShop.filter((unit) =>
-          units.includes(unit),
-        );
-      } else {
-        relatedUnits = await this.getAllUnitsFromBarbershop(barbershop);
-      }
+    if (!Array.isArray(units)) {
+      throw new BadRequestException(
+        'O campo units deve ser um array de IDs válidos.',
+      );
     }
+
+    if (units.some((unit) => typeof unit !== 'string' || unit.trim() === '')) {
+      throw new BadRequestException(
+        'O campo units contém valores inválidos. Certifique-se de enviar apenas IDs válidos.',
+      );
+    }
+
+    const foundUnitsFromBarberShop =
+      await this.getAllUnitsFromBarbershop(barbershop);
+
+    const invalidUnits = units.filter(
+      (unit) => !foundUnitsFromBarberShop.includes(unit),
+    );
+
+    if (invalidUnits.length > 0) {
+      throw new BadRequestException(
+        `Unidades inválidas encontradas: ${invalidUnits.join(', ')}`,
+      );
+    }
+
+    relatedUnits = foundUnitsFromBarberShop.filter((unit) =>
+      units.includes(unit),
+    );
 
     const user = await this.authModel.create({
       email,
@@ -156,7 +173,7 @@ export class AuthService {
   private async validateBarbershop(barbershop: string) {
     const barbershopExists = await this.barberModel.findById(barbershop);
     if (!barbershopExists) {
-      throw new Error('Barbershop not found');
+      throw new NotFoundException('Barbershop not found');
     }
   }
 
@@ -359,16 +376,34 @@ export class AuthService {
 
     let relatedUnits = [];
 
-    if (units?.length > 0) {
-      const foundUnitsFromBarberShop =
-        await this.getAllUnitsFromBarbershop(oldBarbershop);
-
-      relatedUnits = foundUnitsFromBarberShop.filter((unit) =>
-        units.includes(unit),
+    if (!Array.isArray(units)) {
+      throw new BadRequestException(
+        'O campo units deve ser um array de IDs válidos.',
       );
-    } else {
-      relatedUnits = await this.getAllUnitsFromBarbershop(oldBarbershop);
     }
+
+    if (units.some((unit) => typeof unit !== 'string' || unit.trim() === '')) {
+      throw new BadRequestException(
+        'O campo units contém valores inválidos. Certifique-se de enviar apenas IDs válidos.',
+      );
+    }
+
+    const foundUnitsFromBarberShop =
+      await this.getAllUnitsFromBarbershop(oldBarbershop);
+
+    const invalidUnits = units.filter(
+      (unit) => !foundUnitsFromBarberShop.includes(unit),
+    );
+
+    if (invalidUnits.length > 0) {
+      throw new BadRequestException(
+        `Unidades inválidas encontradas: ${invalidUnits.join(', ')}`,
+      );
+    }
+
+    relatedUnits = foundUnitsFromBarberShop.filter((unit) =>
+      units.includes(unit),
+    );
 
     const hashedPassword = await hash(password, 12);
 

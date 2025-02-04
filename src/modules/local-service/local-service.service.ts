@@ -70,7 +70,7 @@ export class LocalServiceService {
     );
 
     if (invalidBarbers.length > 0) {
-      throw new Error('Some barbers are invalid or do not exist');
+      throw new NotFoundException('Some barbers are invalid or do not exist');
     }
 
     await this.validatePermission(userRole, userId, barbers);
@@ -167,7 +167,7 @@ export class LocalServiceService {
     );
 
     if (invalidBarbers.length > 0) {
-      throw new Error('Some barbers are invalid or do not exist');
+      throw new NotFoundException('Some barbers are invalid or do not exist');
     }
 
     await this.validatePermission(userRole, userId, barbers);

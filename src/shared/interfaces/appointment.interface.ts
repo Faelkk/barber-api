@@ -1,7 +1,8 @@
 import { Document } from 'mongoose';
 
 export interface Appointment extends Document {
-  client: string;
+  client: string | null;
+  guestName: string | null;
   barber: string;
   barbershop: string;
   service: string;

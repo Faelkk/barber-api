@@ -5,16 +5,28 @@ import {
   IsEnum,
   IsOptional,
   IsString,
+  ValidateIf,
 } from 'class-validator';
 
 export class CreateAppointmentDto {
   /*
    * ID do cliente associado ao agendamento
    */
-  @ApiProperty({ description: 'ID do cliente associado ao agendamento' })
-  @IsMongoId()
+
+  @IsOptional()
+  @IsString()
+  @ValidateIf((obj) => !obj.guestName)
+  client?: string;
+
+  /*
+   * Nome cliente associado ao agendamento
+   */
+
+  @IsOptional()
+  @IsString()
   @IsNotEmpty()
-  client: string;
+  @ValidateIf((obj) => !obj.client)
+  guestName?: string;
 
   /*
    * ID do barbeiro associado ao agendamento
