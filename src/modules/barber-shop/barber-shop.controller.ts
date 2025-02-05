@@ -21,6 +21,7 @@ import { IsPublic } from 'src/shared/decorators/isPublic';
 import { SupabaseService } from 'src/shared/supabase/supabase.service';
 import { RolesGuard } from '../roles/roles.guard';
 import { ApiBody } from '@nestjs/swagger';
+import { SkipBarberShopIdCheck } from 'src/shared/decorators/SkipBarberShopId';
 
 @Controller('barber-shop')
 @UseGuards(RolesGuard)
@@ -64,11 +65,14 @@ export class BarberShopController {
   }
 
   @IsPublic()
+  @SkipBarberShopIdCheck()
   @Get()
   findAll() {
     return this.barberShopService.findAll();
   }
 
+  @IsPublic()
+  @SkipBarberShopIdCheck()
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.barberShopService.findOne(id);

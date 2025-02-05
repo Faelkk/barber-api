@@ -7,6 +7,7 @@ import {
   ValidateNested,
   IsUrl,
   IsMongoId,
+  IsEmail,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -55,6 +56,14 @@ export class CreateBarberShopDto {
   @ApiProperty({ description: 'Descrição da barbearia' })
   @IsString()
   description: string;
+
+  @ApiProperty({ description: 'Numero da barbearia' })
+  @IsString()
+  phoneNumber: string;
+
+  @ApiProperty({ description: 'Email da barbearia' })
+  @IsEmail()
+  email: string;
 
   @ApiPropertyOptional({
     description: 'Lista de IDs de agendamentos da barbearia',

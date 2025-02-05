@@ -9,6 +9,8 @@ export const BarberShopSchema = new Schema({
   appointments: [{ type: Types.ObjectId, ref: 'Appointment' }],
   globalService: [{ type: Types.ObjectId, ref: 'GlobalService' }],
   unit: [{ type: Types.ObjectId, ref: 'Unit' }],
+  phoneNumber: { type: String, required: true },
+  email: { type: String, required: true },
   socialLinks: {
     facebook: { type: String },
     instagram: { type: String },

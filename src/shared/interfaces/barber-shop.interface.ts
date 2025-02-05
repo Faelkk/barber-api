@@ -15,6 +15,8 @@ export interface BarberShop extends Document {
     youtube?: string;
     tiktok?: string;
   };
+  phoneNumber: string;
+  email: string;
   auth: string[];
   globalService: string[];
   unit: string[];

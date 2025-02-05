@@ -15,6 +15,12 @@ export class UpdateBarberShopDto extends PartialType(CreateBarberShopDto) {
   })
   appointments?: string[];
 
+  @ApiPropertyOptional({ description: 'Numero da barbearia' })
+  phoneNumber: string;
+
+  @ApiPropertyOptional({ description: 'Email da barbearia' })
+  email: string;
+
   @ApiPropertyOptional({
     description: 'Links sociais da barbearia',
     type: () => SocialLinksDto,

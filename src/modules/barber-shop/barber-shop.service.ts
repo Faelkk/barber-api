@@ -55,20 +55,7 @@ export class BarberShopService {
   }
 
   async findAll() {
-    const barberShops = await this.BarberModel.find()
-      .populate({
-        path: 'auth',
-        select: 'name email phoneNumber role avatar description thumbnail',
-      })
-      .populate({
-        path: 'globalService',
-        select: 'name description price',
-      })
-      .populate({
-        path: 'unit',
-        select: 'name location',
-      })
-      .exec();
+    const barberShops = await this.BarberModel.find().exec();
 
     if (!barberShops.length) {
       throw new NotFoundException('No barber shops found.');
@@ -77,20 +64,7 @@ export class BarberShopService {
   }
 
   async findOne(id: string) {
-    const barberShop = await this.BarberModel.findById(id)
-      .populate({
-        path: 'auth',
-        select: 'name email phoneNumber role avatar description thumbnail',
-      })
-      .populate({
-        path: 'globalService',
-        select: 'name description price',
-      })
-      .populate({
-        path: 'unit',
-        select: 'name location',
-      })
-      .exec();
+    const barberShop = await this.BarberModel.findById(id).exec();
 
     if (!barberShop) {
       throw new NotFoundException('Barber shop not found.');
