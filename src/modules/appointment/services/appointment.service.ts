@@ -25,6 +25,7 @@ export class AppointmentService {
     private readonly unitModel: Model<Unit>,
     @InjectModel('Auth')
     private readonly authModel: Model<Auth>,
+
     private readonly appointmentValidationService: AppointmentValidationService,
   ) {}
 

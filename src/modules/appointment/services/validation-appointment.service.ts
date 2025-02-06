@@ -13,6 +13,7 @@ import { GlobalService } from 'src/modules/global-service/entities/global-servic
 import { LocalService } from 'src/modules/local-service/entities/local-service.entity';
 import { Appointment } from 'src/shared/interfaces/appointment.interface';
 import { Auth } from 'src/shared/interfaces/auth.interface';
+import { Holiday } from 'src/shared/interfaces/holiday.interface';
 import { Unit } from 'src/shared/interfaces/unit.interface';
 
 @Injectable()
@@ -28,6 +29,8 @@ export class AppointmentValidationService {
     private readonly authModel: Model<Auth>,
     @InjectModel('Unit')
     private readonly unitModel: Model<Unit>,
+    @InjectModel('Holiday')
+    private readonly holidayModel: Model<Holiday>,
   ) {}
 
   calculateAvailableSlots(
@@ -95,6 +98,7 @@ export class AppointmentValidationService {
 
   async validateAppointmentTime(date: string, unitId: string) {
     await this.validateFutureDate(date);
+    await this.validateNotHoliday(date);
 
     const unitExists = await this.unitModel.findById(unitId).exec();
     if (!unitExists) {
@@ -216,7 +220,7 @@ export class AppointmentValidationService {
       appointment[relationKey].toString() !== userId
     ) {
       throw new ForbiddenException(
-        `You do not have permission to access this appointment`,
+        `Você não tem permissão para acessar esse agendamento`,
       );
     }
 
@@ -228,7 +232,20 @@ export class AppointmentValidationService {
 
     if (isBefore(appointmentDate, now)) {
       throw new BadRequestException(
-        'The appointment date must be in the future.',
+        'O horario do agendamento deve ser no futuro',
+      );
+    }
+  }
+
+  async validateNotHoliday(date: string) {
+    const formattedDate = format(parseISO(date), 'yyyy-MM-dd');
+    const holiday = await this.holidayModel
+      .findOne({ date: formattedDate })
+      .exec();
+
+    if (holiday) {
+      throw new BadRequestException(
+        `A data selecionada é um feriado ${holiday.name} , a barbearia não funcionara nesse dia`,
       );
     }
   }
