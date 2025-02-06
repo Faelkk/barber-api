@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -52,6 +53,7 @@ export class AppointmentService {
     const appointments = await this.appointmentModel
       .find({
         unit: unitId,
+        status: 'scheduled',
         date: {
           $gte: startOfDay(appointmentDate).toISOString(),
           $lt: endOfDay(appointmentDate).toISOString(),
@@ -107,6 +109,10 @@ export class AppointmentService {
       status: 'scheduled',
     });
 
+    if (!appointment) {
+      throw new InternalServerErrorException();
+    }
+
     return { appointment };
   }
 
@@ -142,6 +148,10 @@ export class AppointmentService {
       { new: true },
     );
 
+    if (!updatedAppointment) {
+      throw new InternalServerErrorException();
+    }
+
     return { updatedAppointment };
   }
 
@@ -164,6 +174,10 @@ export class AppointmentService {
       { _id: id },
       { status: 'completed' },
     );
+
+    if (!updatedAppointment) {
+      throw new InternalServerErrorException();
+    }
 
     return { updatedAppointment };
   }
@@ -218,6 +232,10 @@ export class AppointmentService {
       serviceType,
       status: 'scheduled',
     });
+
+    if (!appointment) {
+      throw new InternalServerErrorException();
+    }
 
     return { appointment };
   }
@@ -284,6 +302,10 @@ export class AppointmentService {
       { barber, client, date, service, status, unit, serviceType },
       { new: true },
     );
+
+    if (!updatedAppointment) {
+      throw new InternalServerErrorException();
+    }
 
     const users = await this.authModel.find({ barberShop }).exec();
 

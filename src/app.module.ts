@@ -14,6 +14,7 @@ import { BarberShopModule } from './modules/barber-shop/barber-shop.module';
 import { UnitModule } from './modules/unit/unit.module';
 import { LocalServiceModule } from './modules/local-service/local-service.module';
 import { JwtModule } from '@nestjs/jwt';
+import { HolidayModule } from './holiday/holiday.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { JwtModule } from '@nestjs/jwt';
     GlobalServiceModule,
     LocalServiceModule,
     BarberShopModule,
+    HolidayModule,
   ],
   controllers: [AppController],
 

@@ -94,6 +94,8 @@ export class AppointmentValidationService {
   }
 
   async validateAppointmentTime(date: string, unitId: string) {
+    await this.validateFutureDate(date);
+
     const unitExists = await this.unitModel.findById(unitId).exec();
     if (!unitExists) {
       throw new NotFoundException('Unit not found');
@@ -219,5 +221,15 @@ export class AppointmentValidationService {
     }
 
     return appointment;
+  }
+  async validateFutureDate(date: string) {
+    const appointmentDate = parseISO(date);
+    const now = new Date();
+
+    if (isBefore(appointmentDate, now)) {
+      throw new BadRequestException(
+        'The appointment date must be in the future.',
+      );
+    }
   }
 }

@@ -11,6 +11,7 @@ export const BarberShopSchema = new Schema({
   unit: [{ type: Types.ObjectId, ref: 'Unit' }],
   phoneNumber: { type: String, required: true },
   email: { type: String, required: true },
+  holidays: [{ type: Types.ObjectId, ref: 'Holiday' }],
   socialLinks: {
     facebook: { type: String },
     instagram: { type: String },
