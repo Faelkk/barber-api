@@ -278,7 +278,7 @@ export class AppointmentService {
 
     await this.unitModel.findByIdAndUpdate(
       updatedAppointment._id,
-      { $push: { auth: { $each: users.map((user) => user._id) } } },
+      { $addToSet: { auth: { $each: users.map((user) => user._id) } } },
       { new: true },
     );
 

@@ -47,9 +47,13 @@ export class HolidayService {
       name,
     });
 
-    await this.BarbershopModel.findByIdAndUpdate(barbershop, {
-      $push: { holiday: holiday.id },
-    });
+    await this.BarbershopModel.updateOne(
+      { _id: barbershop },
+      {
+        $pull: { holiday: holiday.id },
+        $push: { holiday: holiday.id },
+      },
+    );
 
     return { holiday };
   }
@@ -107,9 +111,13 @@ export class HolidayService {
       throw new InternalServerErrorException();
     }
 
-    await this.BarbershopModel.findByIdAndUpdate(barbershop, {
-      $push: { holiday: updateOneHoliday.id },
-    });
+    await this.BarbershopModel.updateOne(
+      { _id: barbershop },
+      {
+        $pull: { holiday: holiday.id }, // Remove o feriado antigo
+        $push: { holiday: updateOneHoliday.id }, // Adiciona o novo feriado
+      },
+    );
 
     return { updateOneHoliday };
   }

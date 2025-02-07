@@ -50,9 +50,10 @@ export class AuthService {
     if (!user) {
       throw new InternalServerErrorException('User creation failed');
     }
-    await this.barberModel.findByIdAndUpdate(barbershop, {
-      $push: { auth: user.id },
-    });
+    await this.barberModel.updateOne(
+      { _id: barbershop },
+      { $addToSet: { auth: user.id } },
+    );
 
     const accessToken = await this.generateAccessToken(
       user.id,
@@ -134,13 +135,13 @@ export class AuthService {
     }
 
     await this.barberModel.findByIdAndUpdate(barbershop, {
-      $push: { auth: user.id },
+      $addToSet: { auth: user.id },
     });
 
     if (relatedUnits.length > 0) {
       await this.unitModel.updateMany(
         { _id: { $in: relatedUnits } },
-        { $push: { auth: user.id } },
+        { $addToSet: { auth: user.id } },
       );
     }
 
@@ -346,12 +347,8 @@ export class AuthService {
     );
 
     if (oldBarbershop !== userEdited.barbershop) {
-      await this.barberModel.findByIdAndUpdate(oldBarbershop, {
-        $pull: { auth: user.id },
-      });
-
       await this.barberModel.findByIdAndUpdate(userEdited.barbershop, {
-        $push: { auth: userEdited.id },
+        $addToSet: { auth: userEdited.id },
       });
     }
 
@@ -424,19 +421,15 @@ export class AuthService {
     );
 
     if (oldBarbershop !== barberEdited.barbershop) {
-      await this.barberModel.findByIdAndUpdate(oldBarbershop, {
-        $pull: { auth: user.id },
-      });
-
       await this.barberModel.findByIdAndUpdate(barberEdited.barbershop, {
-        $push: { auth: barberEdited.id },
+        $addToSet: { auth: barberEdited.id },
       });
     }
 
     if (relatedUnits.length > 0) {
       await this.unitModel.updateMany(
         { _id: { $in: relatedUnits } },
-        { $push: { auth: user.id } },
+        { $addToSet: { auth: user.id } },
       );
     }
 
@@ -478,12 +471,8 @@ export class AuthService {
     );
 
     if (oldBarbershop !== userEdited.barbershop) {
-      await this.barberModel.findByIdAndUpdate(oldBarbershop, {
-        $pull: { auth: user.id },
-      });
-
       await this.barberModel.findByIdAndUpdate(userEdited.barbershop, {
-        $push: { auth: userEdited.id },
+        $addToSet: { auth: userEdited.id },
       });
     }
 

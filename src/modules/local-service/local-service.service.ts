@@ -97,7 +97,7 @@ export class LocalServiceService {
     });
 
     await this.unitModel.findByIdAndUpdate(unit, {
-      $push: { localService: localService.id },
+      $addToSet: { localService: localService.id },
     });
 
     return { localService };
@@ -191,13 +191,13 @@ export class LocalServiceService {
 
     if (oldService !== localServiceEdited.barbershop) {
       await this.unitModel.findByIdAndUpdate(localServiceEdited.unit, {
-        $push: { localService: localServiceEdited.id },
+        $addToSet: { localService: localServiceEdited.id },
       });
 
       await this.localServiceModel.findByIdAndUpdate(
         localServiceEdited.barbershop,
         {
-          $push: { auth: localServiceEdited.id },
+          $addToSet: { auth: localServiceEdited.id },
         },
       );
 

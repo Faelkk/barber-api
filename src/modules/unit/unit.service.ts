@@ -54,18 +54,18 @@ export class UnitService {
     });
 
     await this.barberModel.findByIdAndUpdate(unit, {
-      $push: { unit: unit._id },
+      $addToSet: { unit: unit._id },
     });
 
     await this.localService.findByIdAndUpdate(unit, {
-      $push: { unit: unit._id },
+      $addToSet: { unit: unit._id },
     });
 
     const users = await this.authModel.find({ barbershop }).exec();
 
     await this.unitModel.findByIdAndUpdate(
       unit._id,
-      { $push: { auth: { $each: users.map((user) => user._id) } } },
+      { $addToSet: { auth: { $each: users.map((user) => user._id) } } },
       { new: true },
     );
 
@@ -164,15 +164,19 @@ export class UnitService {
 
     if (oldUnit !== unitEdited.barbershop) {
       await this.barberModel.findByIdAndUpdate(oldUnit, {
-        $pull: { unit: unitEdited.id },
+        $pull: { unit: oldUnit },
+      });
+
+      await this.barberModel.findByIdAndUpdate(unitEdited.barbershop, {
+        $addToSet: { unit: unitEdited.id },
       });
 
       await this.localService.findByIdAndUpdate(oldUnit, {
-        $push: { unit: unitEdited._id },
+        $addToSet: { unit: unitEdited._id },
       });
 
       await this.unitModel.findByIdAndUpdate(oldUnit, {
-        $push: { auth: unitEdited.id },
+        $addToSet: { auth: unitEdited.id },
       });
     }
 

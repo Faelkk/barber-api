@@ -58,7 +58,7 @@ export class GlobalServiceService {
     });
 
     await this.barbershopModel.findByIdAndUpdate(barbershop, {
-      $push: { services: globalService.id },
+      $addToSet: { services: globalService.id },
     });
 
     return { globalService };
@@ -123,13 +123,13 @@ export class GlobalServiceService {
 
     if (oldService !== globalServiceEdited.barbershop) {
       await this.barbershopModel.findByIdAndUpdate(oldService, {
-        $pull: { globalService: globalServiceEdited.id },
+        $addToSet: { globalService: globalServiceEdited.id },
       });
 
       await this.globalServiceModel.findByIdAndUpdate(
         globalServiceEdited.barbershop,
         {
-          $push: { auth: globalServiceEdited.id },
+          $addToSet: { auth: globalServiceEdited.id },
         },
       );
     }
