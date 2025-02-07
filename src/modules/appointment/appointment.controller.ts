@@ -33,8 +33,10 @@ export class AppointmentController {
     @Param('unitId') unitId: string,
     @Query('date') date: string,
   ) {
-    const availableTimeslots =
-      await this.appointmentService.getAvailableTimeslots(unitId, date);
+    const availableTimeslots = await this.appointmentService.getAvailableTime(
+      unitId,
+      date,
+    );
     return availableTimeslots;
   }
 

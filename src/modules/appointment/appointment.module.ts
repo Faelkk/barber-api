@@ -11,6 +11,7 @@ import { globalServiceSchema } from 'src/shared/schemas/global-service.schema';
 import { localServiceSchema } from 'src/shared/schemas/local-services.schema';
 import { BarberShopAccessGuard } from 'src/shared/guards/barber-shop/barber-shop-guard';
 import { AppointmentValidationService } from './services/validation-appointment.service';
+import { HolidaySchema } from 'src/shared/schemas/holiday.schema';
 
 @Module({
   imports: [
@@ -25,9 +26,8 @@ import { AppointmentValidationService } from './services/validation-appointment.
     MongooseModule.forFeature([
       { name: 'LocalService', schema: localServiceSchema },
     ]),
-    MongooseModule.forFeature([
-      { name: 'LocalService', schema: localServiceSchema },
-    ]),
+
+    MongooseModule.forFeature([{ name: 'Holiday', schema: HolidaySchema }]),
     MongooseModule.forFeature([{ name: 'AuthModel', schema: AuthSchema }]),
     AuthModule,
     RolesGuardModule,

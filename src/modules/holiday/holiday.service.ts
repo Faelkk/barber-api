@@ -27,17 +27,18 @@ export class HolidayService {
     const existsBarberShop = await this.BarbershopModel.findById(barbershop);
 
     if (!existsBarberShop) {
-      throw new NotFoundException();
+      throw new NotFoundException('Barbearia nao encontrada');
     }
 
-    const existsHoliday = await this.Holiday.find({
+    const existsHoliday = await this.Holiday.findOne({
       where: {
+        barbershop: barbershop,
         date: date,
       },
     }).exec();
 
     if (existsHoliday) {
-      throw new ConflictException();
+      throw new ConflictException('Feriado ja existe');
     }
 
     const holiday = await this.Holiday.create({
@@ -59,47 +60,45 @@ export class HolidayService {
     }).exec();
 
     if (!holidays || holidays.length === 0) {
-      throw new NotFoundException();
+      throw new NotFoundException(
+        'Não encontramos nenhum feriado para essa data',
+      );
     }
 
     return { holidays };
   }
 
-  async findOne(id: number, barberShopId) {
+  async findOne(id: string, barberShopId) {
     const holiday = await this.Holiday.findOne({
       _id: id,
       barbershop: barberShopId,
     }).exec();
 
     if (!holiday) {
-      throw new NotFoundException();
+      throw new NotFoundException('Nao encontramos feriado para esse id');
     }
 
-    return { holiday };
+    return holiday;
   }
 
-  async update(
-    id: number,
-    barberShopId: string,
-    updateHolidayDto: UpdateHolidayDto,
-  ) {
+  async update(id: string, updateHolidayDto: UpdateHolidayDto) {
     const { barbershop, date, name } = updateHolidayDto;
 
     const holiday = await this.Holiday.findOne({
       _id: id,
-      barbershop: barberShopId,
+      barbershop: barbershop,
     }).exec();
 
     if (!holiday) {
-      throw new NotFoundException();
+      throw new NotFoundException('Não foi encontrado feriado pra essa data');
     }
 
     if (holiday.date === date) {
-      throw new ConflictException();
+      throw new ConflictException('Feriado ja existente');
     }
 
     const updateOneHoliday = await this.Holiday.findOneAndUpdate(
-      { _id: id, barbershop: barberShopId },
+      { _id: id, barbershop: barbershop },
       { barbershop, date, name },
       { new: true },
     );
@@ -115,7 +114,7 @@ export class HolidayService {
     return { updateOneHoliday };
   }
 
-  async remove(id: number, barberShopId: string) {
+  async remove(id: string, barberShopId: string) {
     const holiday = await this.Holiday.findOne({
       _id: id,
       barbershop: barberShopId,

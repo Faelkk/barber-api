@@ -11,8 +11,7 @@ import { CreateAppointmentDto } from '../dto/create-appointment.dto';
 import { UpdateAppointmentDto } from '../dto/update-appointment.dto';
 import { Appointment } from 'src/shared/interfaces/appointment.interface';
 import { Unit } from 'src/shared/interfaces/unit.interface';
-import { format, parseISO, startOfDay, endOfDay } from 'date-fns';
-import { enUS } from 'date-fns/locale';
+
 import { AppointmentValidationService } from './validation-appointment.service';
 import { Auth } from 'src/shared/interfaces/auth.interface';
 
@@ -29,50 +28,12 @@ export class AppointmentService {
     private readonly appointmentValidationService: AppointmentValidationService,
   ) {}
 
-  async getAvailableTimeslots(unitId: string, date: string) {
-    const unitExists = await this.unitModel.findById(unitId).exec();
-    if (!unitExists) {
-      throw new NotFoundException('Unit not found');
-    }
-
-    const operatingHours = unitExists.operatingHours;
-
-    const appointmentDate = date;
-
-    const dayOfWeek = format(appointmentDate, 'eeee', {
-      locale: enUS,
-    }).toLowerCase();
-
-    const hours = operatingHours[dayOfWeek];
-
-    if (!hours || !hours.start || !hours.end) {
-      throw new BadRequestException(
-        'The unit does not operate on the selected day.',
-      );
-    }
-
-    const appointments = await this.appointmentModel
-      .find({
-        unit: unitId,
-        status: 'scheduled',
-        date: {
-          $gte: startOfDay(appointmentDate).toISOString(),
-          $lt: endOfDay(appointmentDate).toISOString(),
-        },
-      })
-
-      .exec();
-
-    const formattedTimes = appointments.map((appointment) =>
-      format(parseISO(appointment.date), 'HH:mm'),
-    );
+  async getAvailableTime(unitId: string, date: string) {
+    const { unitExists } =
+      await this.appointmentValidationService.validateUnitsExists(unitId);
 
     const availableSlots =
-      this.appointmentValidationService.calculateAvailableSlots(
-        hours.start,
-        hours.end,
-        formattedTimes,
-      );
+      this.appointmentValidationService.getAvailableTimeslots(unitExists, date);
 
     return availableSlots;
   }
@@ -90,14 +51,13 @@ export class AppointmentService {
       serviceType,
     );
 
-    const availableSlots = await this.getAvailableTimeslots(unit, date);
-    const appointmentTime = format(parseISO(date), 'HH:mm');
+    const availableSlots =
+      await this.appointmentValidationService.getAvailableTimeslots(unit, date);
 
-    if (!availableSlots.includes(appointmentTime)) {
-      throw new BadRequestException(
-        `O horário selecionado (${appointmentTime}) não está disponível.`,
-      );
-    }
+    await this.appointmentValidationService.checkAppointmentIsAvailable(
+      availableSlots,
+      date,
+    );
 
     const appointment = await this.appointmentModel.create({
       barber,
@@ -129,14 +89,12 @@ export class AppointmentService {
       throw new NotFoundException('Agendamento para convidado não encontrado.');
     }
 
-    const availableSlots = await this.getAvailableTimeslots(unit, date);
-    const appointmentTime = format(parseISO(date), 'HH:mm');
-
-    if (!availableSlots.includes(appointmentTime)) {
-      throw new BadRequestException(
-        `O horário selecionado (${appointmentTime}) não está disponível.`,
-      );
-    }
+    const availableSlots =
+      await this.appointmentValidationService.getAvailableTimeslots(unit, date);
+    await this.appointmentValidationService.checkAppointmentIsAvailable(
+      availableSlots,
+      date,
+    );
 
     await this.appointmentValidationService.validateServiceExistence(
       service,
@@ -191,36 +149,46 @@ export class AppointmentService {
     const { barber, client, date, service, barbershop, unit, serviceType } =
       createAppointmentDto;
 
-    if (!client) {
-      throw new BadRequestException('client é obrigatorio');
-    }
-
     await this.appointmentValidationService.validateUserPermission(
       userRole,
       userId,
       client,
       barber,
     );
+
+    if (!client) {
+      throw new BadRequestException('client é obrigatorio');
+    }
+
+    const { unitExists } =
+      await this.appointmentValidationService.validateUnitsExists(unit);
+
     await this.appointmentValidationService.validateBarber(barber);
+
+    await this.appointmentValidationService.validateAppointmentTime(
+      date,
+      unitExists,
+    );
+    await this.appointmentValidationService.validateServiceExistence(
+      service,
+      serviceType,
+    );
+
     await this.appointmentValidationService.validateAppointmentExistence(
       barber,
       unit,
       date,
     );
 
-    const availableSlots = await this.getAvailableTimeslots(unit, date);
-    const appointmentTime = format(parseISO(date), 'HH:mm');
-
-    if (!availableSlots.includes(appointmentTime)) {
-      throw new BadRequestException(
-        `O horário selecionado (${appointmentTime}) não está disponível.`,
+    const availableSlots =
+      await this.appointmentValidationService.getAvailableTimeslots(
+        unitExists,
+        date,
       );
-    }
 
-    await this.appointmentValidationService.validateAppointmentTime(date, unit);
-    await this.appointmentValidationService.validateServiceExistence(
-      service,
-      serviceType,
+    await this.appointmentValidationService.checkAppointmentIsAvailable(
+      availableSlots,
+      date,
     );
 
     const appointment = await this.appointmentModel.create({
@@ -283,15 +251,13 @@ export class AppointmentService {
       date,
       id,
     );
-    const availableSlots = await this.getAvailableTimeslots(unit, date);
-    const appointmentTime = format(parseISO(date), 'HH:mm');
+    const availableSlots =
+      await this.appointmentValidationService.getAvailableTimeslots(unit, date);
 
-    if (!availableSlots.includes(appointmentTime)) {
-      throw new BadRequestException(
-        `The selected time (${appointmentTime}) is not available.`,
-      );
-    }
-
+    await this.appointmentValidationService.checkAppointmentIsAvailable(
+      availableSlots,
+      date,
+    );
     await this.appointmentValidationService.validateServiceExistence(
       service,
       serviceType,

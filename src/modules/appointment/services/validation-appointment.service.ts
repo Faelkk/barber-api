@@ -6,7 +6,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { format, isAfter, isBefore, parseISO } from 'date-fns';
+import {
+  endOfDay,
+  format,
+  isAfter,
+  isBefore,
+  parseISO,
+  startOfDay,
+} from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import { Model } from 'mongoose';
 import { GlobalService } from 'src/modules/global-service/entities/global-service.entity';
@@ -96,16 +103,11 @@ export class AppointmentValidationService {
     }
   }
 
-  async validateAppointmentTime(date: string, unitId: string) {
+  async validateAppointmentTime(date: string, unit) {
     await this.validateFutureDate(date);
     await this.validateNotHoliday(date);
 
-    const unitExists = await this.unitModel.findById(unitId).exec();
-    if (!unitExists) {
-      throw new NotFoundException('Unit not found');
-    }
-
-    const operatingHours = unitExists.operatingHours;
+    const operatingHours = unit.operatingHours;
     const appointmentDate = parseISO(date);
     const dayOfWeek = format(appointmentDate, 'eeee', {
       locale: enUS,
@@ -113,9 +115,7 @@ export class AppointmentValidationService {
     const hours = operatingHours[dayOfWeek];
 
     if (!hours || !hours.start || !hours.end) {
-      throw new BadRequestException(
-        'The unit does not operate on the selected day.',
-      );
+      throw new BadRequestException('A unidade não opera no dia selecionado.');
     }
 
     const appointmentTime = format(appointmentDate, 'HH:mm');
@@ -127,7 +127,7 @@ export class AppointmentValidationService {
       isAfter(parseISO(`1970-01-01T${appointmentTime}:00`), endTime)
     ) {
       throw new BadRequestException(
-        `The appointment time must be between ${hours.start} and ${hours.end}.`,
+        `O horario do apontamento deve ser entre ${hours.start} e ${hours.end}.`,
       );
     }
   }
@@ -238,15 +238,101 @@ export class AppointmentValidationService {
   }
 
   async validateNotHoliday(date: string) {
-    const formattedDate = format(parseISO(date), 'yyyy-MM-dd');
+    const parsedDate = parseISO(date);
+
+    const normalizedDate = new Date(
+      Date.UTC(
+        parsedDate.getUTCFullYear(),
+        parsedDate.getUTCMonth(),
+        parsedDate.getUTCDate(),
+        0,
+        0,
+        0,
+        0,
+      ),
+    );
+
     const holiday = await this.holidayModel
-      .findOne({ date: formattedDate })
+      .findOne({
+        date: normalizedDate,
+      })
       .exec();
 
     if (holiday) {
       throw new BadRequestException(
-        `A data selecionada é um feriado ${holiday.name} , a barbearia não funcionara nesse dia`,
+        `A data selecionada é um feriado (${holiday.name}), a barbearia não funcionará nesse dia.`,
       );
     }
+  }
+
+  async validateUnitsExists(unitId: string) {
+    const unitExists = await this.unitModel.findById(unitId).exec();
+    if (!unitExists) {
+      throw new NotFoundException('Unit not found');
+    }
+
+    return { unitExists };
+  }
+
+  async findFormattedTimes(unitId: string, appointmentDate: string) {
+    const appointments = await this.appointmentModel
+      .find({
+        unit: unitId,
+        status: 'scheduled',
+        date: {
+          $gte: startOfDay(appointmentDate).toISOString(),
+          $lt: endOfDay(appointmentDate).toISOString(),
+        },
+      })
+
+      .exec();
+
+    const formattedTimes = appointments.map((appointment) =>
+      format(parseISO(appointment.date), 'HH:mm'),
+    );
+
+    return { formattedTimes };
+  }
+
+  async formatAndValidateHours(unitExists, date: string) {
+    const operatingHours = unitExists.operatingHours;
+
+    const dayOfWeek = format(date, 'eeee', {
+      locale: enUS,
+    }).toLowerCase();
+
+    const hours = operatingHours[dayOfWeek];
+
+    if (!hours || !hours.start || !hours.end) {
+      throw new BadRequestException(
+        'The unit does not operate on the selected day.',
+      );
+    }
+
+    return { hours };
+  }
+
+  async checkAppointmentIsAvailable(availableSlots, date: string) {
+    const appointmentTime = format(parseISO(date), 'HH:mm');
+
+    if (!availableSlots.includes(appointmentTime)) {
+      throw new BadRequestException(
+        `O horário selecionado (${appointmentTime}) não está disponível.`,
+      );
+    }
+  }
+
+  async getAvailableTimeslots(unit, date: string) {
+    const { hours } = await this.formatAndValidateHours(unit, date);
+
+    const { formattedTimes } = await this.findFormattedTimes(unit._id, date);
+
+    const availableSlots = this.calculateAvailableSlots(
+      hours.start,
+      hours.end,
+      formattedTimes,
+    );
+
+    return availableSlots;
   }
 }

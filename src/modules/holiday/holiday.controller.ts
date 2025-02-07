@@ -40,23 +40,19 @@ export class HolidayController {
     @Param('id') id: string,
     @Query('barberShopId') barberShopId: string,
   ) {
-    return this.holidayService.findOne(+id, barberShopId);
+    return this.holidayService.findOne(id, barberShopId);
   }
 
   @Patch(':id')
   @ApiBody({ type: UpdateHolidayDto })
   @Roles(Role.Admin, Role.Barber, Role.Developer)
-  update(
-    @Param('id') id: string,
-    @Query('barberShopId') barberShopId: string,
-    @Body() updateHolidayDto: UpdateHolidayDto,
-  ) {
-    return this.holidayService.update(+id, barberShopId, updateHolidayDto);
+  update(@Param('id') id: string, @Body() updateHolidayDto: UpdateHolidayDto) {
+    return this.holidayService.update(id, updateHolidayDto);
   }
 
   @Delete(':id')
   @Roles(Role.Admin, Role.Barber, Role.Developer)
   remove(@Param('id') id: string, @Query('barberShopId') barberShopId: string) {
-    return this.holidayService.remove(+id, barberShopId);
+    return this.holidayService.remove(id, barberShopId);
   }
 }
