@@ -18,6 +18,8 @@ import { BarberShop } from 'src/shared/interfaces/barber-shop.interface';
 import { Unit } from 'src/shared/interfaces/unit.interface';
 import { randomBytes } from 'crypto';
 import { MailerService } from '@nestjs-modules/mailer';
+import { Appointment } from 'src/shared/interfaces/appointment.interface';
+import { LocalService } from 'src/modules/local-service/entities/local-service.entity';
 
 @Injectable()
 export class AuthService {
@@ -25,6 +27,10 @@ export class AuthService {
     @InjectModel('Auth') private readonly authModel: Model<Auth>,
     @InjectModel('BarberShop') private readonly barberModel: Model<BarberShop>,
     @InjectModel('Unit') private readonly unitModel: Model<Unit>,
+    @InjectModel('LocalService')
+    private readonly localService: Model<LocalService>,
+    @InjectModel('Appointment')
+    private readonly appointmentModel: Model<Appointment>,
     private readonly jwtService: JwtService,
     private readonly mailerService: MailerService,
   ) {}
@@ -77,7 +83,7 @@ export class AuthService {
       phoneNumber,
       description,
       barbershop,
-      units,
+      unit,
     } = createAuthDto;
 
     await this.validateBarbershop(barbershop);
@@ -88,22 +94,28 @@ export class AuthService {
 
     let relatedUnits = [];
 
-    if (!Array.isArray(units)) {
+    const convertedUnits = JSON.parse(unit as any);
+
+    if (!Array.isArray(convertedUnits)) {
       throw new BadRequestException(
-        'O campo units deve ser um array de IDs válidos.',
+        'O campo unit deve ser um array de IDs válidos.',
       );
     }
 
-    if (units.some((unit) => typeof unit !== 'string' || unit.trim() === '')) {
+    if (
+      convertedUnits.some(
+        (unit) => typeof unit !== 'string' || unit.trim() === '',
+      )
+    ) {
       throw new BadRequestException(
-        'O campo units contém valores inválidos. Certifique-se de enviar apenas IDs válidos.',
+        'O campo unit contém valores inválidos. Certifique-se de enviar apenas IDs válidos.',
       );
     }
 
     const foundUnitsFromBarberShop =
       await this.getAllUnitsFromBarbershop(barbershop);
 
-    const invalidUnits = units.filter(
+    const invalidUnits = convertedUnits.filter(
       (unit) => !foundUnitsFromBarberShop.includes(unit),
     );
 
@@ -114,7 +126,7 @@ export class AuthService {
     }
 
     relatedUnits = foundUnitsFromBarberShop.filter((unit) =>
-      units.includes(unit),
+      unit.includes(unit),
     );
 
     const user = await this.authModel.create({
@@ -127,7 +139,7 @@ export class AuthService {
       thumbnail: thumbnailUrl,
       role,
       barbershop,
-      units: relatedUnits,
+      unit: relatedUnits,
     });
 
     if (!user) {
@@ -361,7 +373,7 @@ export class AuthService {
     avatarUrl?: string,
     thumbnailUrl?: string,
   ) {
-    const { name, email, password, phoneNumber, description, units } =
+    const { name, email, password, phoneNumber, description, unit } =
       updateAuthDto;
     const user = await this.authModel.findById(id).exec();
 
@@ -373,22 +385,22 @@ export class AuthService {
 
     let relatedUnits = [];
 
-    if (!Array.isArray(units)) {
+    if (!Array.isArray(unit)) {
       throw new BadRequestException(
-        'O campo units deve ser um array de IDs válidos.',
+        'O campo unit deve ser um array de IDs válidos.',
       );
     }
 
-    if (units.some((unit) => typeof unit !== 'string' || unit.trim() === '')) {
+    if (unit.some((unit) => typeof unit !== 'string' || unit.trim() === '')) {
       throw new BadRequestException(
-        'O campo units contém valores inválidos. Certifique-se de enviar apenas IDs válidos.',
+        'O campo unit contém valores inválidos. Certifique-se de enviar apenas IDs válidos.',
       );
     }
 
     const foundUnitsFromBarberShop =
       await this.getAllUnitsFromBarbershop(oldBarbershop);
 
-    const invalidUnits = units.filter(
+    const invalidUnits = unit.filter(
       (unit) => !foundUnitsFromBarberShop.includes(unit),
     );
 
@@ -399,7 +411,7 @@ export class AuthService {
     }
 
     relatedUnits = foundUnitsFromBarberShop.filter((unit) =>
-      units.includes(unit),
+      unit.includes(unit),
     );
 
     const hashedPassword = await hash(password, 12);
@@ -486,16 +498,31 @@ export class AuthService {
         barbershop: barberShopId,
       })
       .exec();
+
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    await this.barberModel.findByIdAndUpdate(barberShopId, {
+    await this.barberModel.findByIdAndUpdate(user.barbershop, {
       $pull: { auth: user.id },
     });
 
-    await this.unitModel.findByIdAndUpdate(barberShopId, {
-      $pull: { auth: user.id },
+    if (user.role === 'Barber') {
+      await this.localService.updateMany(
+        { barbers: id },
+        { $pull: { barbers: id } },
+      );
+
+      if (user.unit && user.unit.length > 0) {
+        await this.unitModel.updateMany(
+          { _id: { $in: user.unit } },
+          { $pull: { auth: id } },
+        );
+      }
+    }
+
+    await this.appointmentModel.deleteMany({
+      $or: [{ client: user }, { barber: user }],
     });
 
     return { message: 'User removed successfully' };

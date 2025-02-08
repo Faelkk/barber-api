@@ -50,8 +50,7 @@ export class HolidayService {
     await this.BarbershopModel.updateOne(
       { _id: barbershop },
       {
-        $pull: { holiday: holiday.id },
-        $push: { holiday: holiday.id },
+        $addToSet: { holiday: holiday.id },
       },
     );
 
@@ -111,11 +110,20 @@ export class HolidayService {
       throw new InternalServerErrorException();
     }
 
+    if (barbershop !== updateOneHoliday.barbershop) {
+      await this.BarbershopModel.updateOne(
+        { _id: barbershop },
+        {
+          $pull: { holiday: id },
+        },
+      );
+    }
+
     await this.BarbershopModel.updateOne(
       { _id: barbershop },
       {
-        $pull: { holiday: holiday.id }, // Remove o feriado antigo
-        $push: { holiday: updateOneHoliday.id }, // Adiciona o novo feriado
+        $pull: { holiday: holiday.id },
+        $addToSet: { holiday: updateOneHoliday.id },
       },
     );
 
@@ -132,6 +140,12 @@ export class HolidayService {
       throw new NotFoundException();
     }
 
+    await this.BarbershopModel.updateOne(
+      { _id: barberShopId },
+      {
+        $pull: { holiday: holiday.id },
+      },
+    );
     await holiday.deleteOne();
 
     return { deleted: true };

@@ -8,11 +8,27 @@ import { UpdateBarberShopDto } from './dto/update-barber-shop.dto';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { BarberShop } from 'src/shared/interfaces/barber-shop.interface';
+import { Unit } from 'src/shared/interfaces/unit.interface';
+import { GlobalService } from 'src/shared/interfaces/global-servicce.interface';
+import { LocalService } from 'src/shared/interfaces/local-service.interface';
+import { Auth } from 'src/shared/interfaces/auth.interface';
+import { Appointment } from 'src/shared/interfaces/appointment.interface';
+import { Holiday } from 'src/shared/interfaces/holiday.interface';
 
 @Injectable()
 export class BarberShopService {
   constructor(
     @InjectModel('BarberShop') private readonly BarberModel: Model<BarberShop>,
+    @InjectModel('Unit') private readonly UnitModel: Model<Unit>,
+    @InjectModel('GlobalService')
+    private readonly GlobalServiceModel: Model<GlobalService>,
+    @InjectModel('LocalService')
+    private readonly LocalServiceModel: Model<LocalService>,
+    @InjectModel('Auth') private readonly AuthModel: Model<Auth>,
+    @InjectModel('Appointment')
+    private readonly AppointmentModel: Model<Appointment>,
+    @InjectModel('Holiday')
+    private readonly HolidayModel: Model<Holiday>,
   ) {}
 
   private async validateOwnership(barberShop: BarberShop, userId: string) {
@@ -100,12 +116,29 @@ export class BarberShopService {
   }
 
   async remove(id: string) {
-    const deletedbarberShop =
-      await this.BarberModel.findByIdAndDelete(id).exec();
-    if (!deletedbarberShop) {
+    const barberShop = await this.BarberModel.findById(id).exec();
+    if (!barberShop) {
       throw new NotFoundException(`Barbershop with ID ${id} not found`);
     }
 
-    return { message: 'Barber shop successfully deleted.' };
+    await Promise.all([
+      this.AppointmentModel.deleteMany({
+        _id: { $in: barberShop.appointments },
+      }).exec(),
+      this.GlobalServiceModel.deleteMany({
+        _id: { $in: barberShop.globalService },
+      }).exec(),
+      this.LocalServiceModel.deleteMany({
+        _id: { $in: barberShop.localService },
+      }).exec(),
+      this.UnitModel.deleteMany({ _id: { $in: barberShop.unit } }).exec(),
+      this.HolidayModel.deleteMany({
+        _id: { $in: barberShop.holidays },
+      }).exec(),
+    ]);
+
+    await this.BarberModel.findByIdAndDelete(id).exec();
+
+    return { message: 'Barber shop and related data successfully deleted.' };
   }
 }

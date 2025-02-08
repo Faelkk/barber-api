@@ -194,10 +194,18 @@ export class UnitService {
     if (!deletedUnit) {
       throw new NotFoundException(`Unit with ID ${id} not found`);
     }
+
+    await this.localService.deleteMany({ unit: deletedUnit.id });
+
     await this.barberModel.findByIdAndUpdate(barberShopId, {
       $pull: { unit: deletedUnit.id },
     });
 
-    return { message: 'unity successfully deleted.' };
+    await this.authModel.updateMany(
+      { unit: deletedUnit.id },
+      { $pull: { unit: deletedUnit.id } },
+    );
+
+    return { message: 'Unit and associated services removed successfully' };
   }
 }

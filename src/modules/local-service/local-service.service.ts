@@ -100,6 +100,15 @@ export class LocalServiceService {
       $addToSet: { localService: localService.id },
     });
 
+    await this.barbershopModel.findByIdAndUpdate(barbershop, {
+      $addToSet: { localService: localService.id },
+    });
+
+    await this.AuthModel.updateMany(
+      { _id: { $in: validBarbers.map((barber) => barber._id) } },
+      { $addToSet: { services: localService.id } },
+    );
+
     return { localService };
   }
 
@@ -194,11 +203,18 @@ export class LocalServiceService {
         $addToSet: { localService: localServiceEdited.id },
       });
 
-      await this.localServiceModel.findByIdAndUpdate(
-        localServiceEdited.barbershop,
-        {
-          $addToSet: { auth: localServiceEdited.id },
-        },
+      await this.barbershopModel.findByIdAndUpdate(barbershop, {
+        $addToSet: { localService: localServiceEdited.id },
+      });
+
+      await this.AuthModel.updateMany(
+        { _id: { $in: existingService.barbers } },
+        { $pull: { services: existingService.id } },
+      );
+
+      await this.AuthModel.updateMany(
+        { _id: { $in: validBarbers.map((barber) => barber._id) } },
+        { $addToSet: { services: existingService.id } },
       );
 
       return {
@@ -217,9 +233,19 @@ export class LocalServiceService {
       throw new NotFoundException(`Local Service with ID ${id} not found`);
     }
 
-    await this.unitModel.findByIdAndUpdate(barbershopId, {
-      $pull: { services: deletedService.id },
+    await this.unitModel.findByIdAndUpdate(unitId, {
+      $pull: { localService: deletedService.id },
     });
+
+    await this.AuthModel.updateMany(
+      { services: deletedService.id },
+      { $pull: { services: deletedService.id } },
+    );
+
+    await this.barbershopModel.updateMany(
+      { globalService: deletedService.id },
+      { $pull: { globalService: deletedService.id } },
+    );
 
     return { message: 'Local service removed successfully' };
   }

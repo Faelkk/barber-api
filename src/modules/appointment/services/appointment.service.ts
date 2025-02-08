@@ -14,6 +14,8 @@ import { Unit } from 'src/shared/interfaces/unit.interface';
 
 import { AppointmentValidationService } from './validation-appointment.service';
 import { Auth } from 'src/shared/interfaces/auth.interface';
+import { BarberShop } from 'src/shared/interfaces/barber-shop.interface';
+import { GlobalService } from 'src/shared/interfaces/global-servicce.interface';
 
 @Injectable()
 export class AppointmentService {
@@ -24,6 +26,9 @@ export class AppointmentService {
     private readonly unitModel: Model<Unit>,
     @InjectModel('Auth')
     private readonly authModel: Model<Auth>,
+    @InjectModel('BarberShop') private readonly BarberModel: Model<BarberShop>,
+    @InjectModel('GlobalService')
+    private readonly globalServiceModel: Model<GlobalService>,
 
     private readonly appointmentValidationService: AppointmentValidationService,
   ) {}
@@ -74,6 +79,13 @@ export class AppointmentService {
       throw new InternalServerErrorException();
     }
 
+    const users = await this.authModel.find({ barbershop }).exec();
+    await this.unitModel.findByIdAndUpdate(
+      appointment._id,
+      { $addToSet: { auth: { $each: users.map((user) => user._id) } } },
+      { new: true },
+    );
+
     return { appointment };
   }
 
@@ -110,6 +122,15 @@ export class AppointmentService {
     if (!updatedAppointment) {
       throw new InternalServerErrorException();
     }
+
+    const users = await this.authModel
+      .find({ barbershop: updatedAppointment.barbershop })
+      .exec();
+    await this.unitModel.findByIdAndUpdate(
+      updatedAppointment._id,
+      { $addToSet: { auth: { $each: users.map((user) => user._id) } } },
+      { new: true },
+    );
 
     return { updatedAppointment };
   }
@@ -169,6 +190,7 @@ export class AppointmentService {
       date,
       unitExists,
     );
+
     await this.appointmentValidationService.validateServiceExistence(
       service,
       serviceType,
@@ -205,6 +227,20 @@ export class AppointmentService {
     if (!appointment) {
       throw new InternalServerErrorException();
     }
+
+    const users = await this.authModel.find({ barbershop }).exec();
+
+    await this.BarberModel.findByIdAndUpdate(
+      barbershop,
+      { $addToSet: { appointments: appointment._id } },
+      { new: true },
+    );
+
+    await this.unitModel.findByIdAndUpdate(
+      appointment._id,
+      { $addToSet: { auth: { $each: users.map((user) => user._id) } } },
+      { new: true },
+    );
 
     return { appointment };
   }
@@ -353,6 +389,22 @@ export class AppointmentService {
         userRole,
         userRole === 'Client' ? 'client' : 'barber',
       );
+
+    await this.authModel.updateMany(
+      { _id: { $in: [appointment.client, appointment.barber] } },
+      { $pull: { appointments: id } },
+    );
+
+    await this.BarberModel.findByIdAndUpdate(
+      appointment.barbershop,
+      { $pull: { appointments: appointment._id } },
+      { new: true },
+    );
+
+    await this.unitModel.updateOne(
+      { _id: appointment.unit },
+      { $pull: { appointments: id } },
+    );
 
     await appointment.deleteOne();
 

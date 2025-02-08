@@ -8,6 +8,7 @@ export const BarberShopSchema = new Schema({
   auth: [{ type: Types.ObjectId, ref: 'Auth' }],
   appointments: [{ type: Types.ObjectId, ref: 'Appointment' }],
   globalService: [{ type: Types.ObjectId, ref: 'GlobalService' }],
+  localService: [{ type: Types.ObjectId, ref: 'LocalService' }],
   unit: [{ type: Types.ObjectId, ref: 'Unit' }],
   phoneNumber: { type: String, required: true },
   email: { type: String, required: true },

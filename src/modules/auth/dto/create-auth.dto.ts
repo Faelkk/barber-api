@@ -79,5 +79,5 @@ export class CreateAuthDto {
   @IsArray()
   @IsString({ each: true })
   @IsNotEmpty({ each: true })
-  units?: string[];
+  unit?: string[];
 }

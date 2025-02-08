@@ -123,15 +123,12 @@ export class GlobalServiceService {
 
     if (oldService !== globalServiceEdited.barbershop) {
       await this.barbershopModel.findByIdAndUpdate(oldService, {
-        $addToSet: { globalService: globalServiceEdited.id },
+        $pull: { globalService: oldService },
       });
 
-      await this.globalServiceModel.findByIdAndUpdate(
-        globalServiceEdited.barbershop,
-        {
-          $addToSet: { auth: globalServiceEdited.id },
-        },
-      );
+      await this.barbershopModel.findByIdAndUpdate(globalServiceEdited.id, {
+        $addToSet: { globalService: globalServiceEdited.id },
+      });
     }
 
     return {

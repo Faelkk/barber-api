@@ -10,6 +10,8 @@ import { SupabaseModule } from 'src/shared/supabase/supabase.module';
 import { unitSchema } from 'src/shared/schemas/unit.schema';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
+import { AppointmentSchema } from 'src/shared/schemas/appointment.schema';
+import { localServiceSchema } from 'src/shared/schemas/local-services.schema';
 
 @Module({
   imports: [
@@ -23,6 +25,12 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
     MongooseModule.forFeature([{ name: 'Auth', schema: AuthSchema }]),
     MongooseModule.forFeature([
       { name: 'BarberShop', schema: BarberShopSchema },
+    ]),
+    MongooseModule.forFeature([
+      { name: 'Appointment', schema: AppointmentSchema },
+    ]),
+    MongooseModule.forFeature([
+      { name: 'LocalService', schema: localServiceSchema },
     ]),
     MailerModule.forRootAsync({
       useFactory: () => ({

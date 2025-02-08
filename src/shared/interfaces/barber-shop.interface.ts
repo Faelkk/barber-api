@@ -19,5 +19,7 @@ export interface BarberShop extends Document {
   email: string;
   auth: string[];
   globalService: string[];
+  localService: string[];
   unit: string[];
+  holidays: string[];
 }
